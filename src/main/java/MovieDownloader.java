@@ -18,9 +18,12 @@ import java.util.Scanner;
  */
 public class MovieDownloader {
 
+	/**
+	* Primary method that returns an array of Strings containing movie data
+	*/
 	public static String[] downloadMovieData(String movie) {
 
-		//construct the url for the omdbapi API
+		//construct the url for the omdbapi API, catches strange characters
 		String urlString = "";
 		try {
 			urlString = "http://www.omdbapi.com/?s=" + URLEncoder.encode(movie, "UTF-8") + "&type=movie";
@@ -31,73 +34,76 @@ public class MovieDownloader {
 		HttpURLConnection urlConnection = null;
 		BufferedReader reader = null;
 
-		String[] movies = null;
+		String[] movies = null; //Empty string array to be returned
 
 		try {
 
-			URL url = new URL(urlString);
+			URL url = new URL(urlString); //Constructs an URL out of urlString
 
-			urlConnection = (HttpURLConnection) url.openConnection();
-			urlConnection.setRequestMethod("GET");
-			urlConnection.connect();
+			urlConnection = (HttpURLConnection) url.openConnection(); //Opens Http connection
+			urlConnection.setRequestMethod("GET"); //Requesting data, not posting
+			urlConnection.connect();	//Attempt to connect
 
-			InputStream inputStream = urlConnection.getInputStream();
+			InputStream inputStream = urlConnection.getInputStream(); 
 			StringBuffer buffer = new StringBuffer();
 			if (inputStream == null) {
 				return null;
 			}
 			reader = new BufferedReader(new InputStreamReader(inputStream));
 
-			String line = reader.readLine();
+			String line = reader.readLine(); //Read each line of received data
 			while (line != null) {
 				buffer.append(line + "\n");
 				line = reader.readLine();
 			}
 
+			//Return null if no results
 			if (buffer.length() == 0) {
 				return null;
 			}
-			String results = buffer.toString();
+			String results = buffer.toString(); //Transfer result data into result array
 			results = results.replace("{\"Search\":[","");
 			results = results.replace("]}","");
 			results = results.replace("},", "},\n");
 
-			movies = results.split("\n");
+			movies = results.split("\n"); //Construct an array based on new lines in the results string
 		} 
-		catch (IOException e) {
+		catch (IOException e) { //Catch errors regarding input/output 
 			return null;
 		} 
 		finally {
 			if (urlConnection != null) {
-				urlConnection.disconnect();
+				urlConnection.disconnect(); //Disconnect on finish
 			}
 			if (reader != null) {
 				try {
-					reader.close();
+					reader.close(); //Close reader on finish
 				} 
 				catch (IOException e) {
 				}
 			}
 		}
 
+		//Return movies array
 		return movies;
 	}
 
 
+	//What happens when the program is ran
 	public static void main(String[] args) 
 	{
-		Scanner sc = new Scanner(System.in);
+		Scanner sc = new Scanner(System.in); //Allows for user input
 
 		boolean searching = true;
 
 		while(searching) {					
 			System.out.print("Enter a movie name to search for or type 'q' to quit: ");
 			String searchTerm = sc.nextLine().trim();
-			if(searchTerm.toLowerCase().equals("q")){
+			if(searchTerm.toLowerCase().equals("q")){ //Close command
 				searching = false;
 			}
 			else {
-				String[] movies = downloadMovieData(searchTerm);
+				String[] movies = downloadMovieData(searchTerm); //If not close command, send a reqeust based on user input
 				for(String movie : movies) {
 					System.out.println(movie);
 				}
